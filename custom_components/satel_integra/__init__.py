@@ -15,6 +15,7 @@ from homeassistant.helpers.typing import ConfigType
 DEFAULT_ALARM_NAME = "satel_integra"
 DEFAULT_PORT = 7094
 DEFAULT_CONF_ARM_HOME_MODE = 1
+DEFAULT_CONF_ARM_NIGHT_MODE = 2
 DEFAULT_DEVICE_PARTITION = 1
 DEFAULT_ZONE_TYPE = "motion"
 
@@ -27,6 +28,7 @@ DATA_SATEL = "satel_integra"
 CONF_DEVICE_CODE = "code"
 CONF_DEVICE_PARTITIONS = "partitions"
 CONF_ARM_HOME_MODE = "arm_home_mode"
+CONF_ARM_NIGHT_MODE = "arm_night_mode"
 CONF_ZONE_NAME = "name"
 CONF_ZONE_TYPE = "type"
 CONF_ZONES = "zones"
@@ -55,6 +57,9 @@ PARTITION_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_ZONE_NAME): cv.string,
         vol.Optional(CONF_ARM_HOME_MODE, default=DEFAULT_CONF_ARM_HOME_MODE): vol.In(
+            [1, 2, 3]
+        ),
+        vol.Optional(CONF_ARM_NIGHT_MODE, default=DEFAULT_CONF_ARM_NIGHT_MODE): vol.In(
             [1, 2, 3]
         ),
     }

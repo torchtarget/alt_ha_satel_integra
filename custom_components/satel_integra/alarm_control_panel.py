@@ -21,6 +21,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import (
     CONF_ARM_HOME_MODE,
+    CONF_ARM_NIGHT_MODE,
     CONF_DEVICE_PARTITIONS,
     CONF_ZONE_NAME,
     DATA_SATEL,
@@ -48,8 +49,9 @@ async def async_setup_platform(
     for partition_num, device_config_data in configured_partitions.items():
         zone_name = device_config_data[CONF_ZONE_NAME]
         arm_home_mode = device_config_data.get(CONF_ARM_HOME_MODE)
+        arm_night_mode = device_config_data.get(CONF_ARM_NIGHT_MODE)
         device = SatelIntegraAlarmPanel(
-            controller, zone_name, arm_home_mode, partition_num
+            controller, zone_name, arm_home_mode, arm_night_mode, partition_num
         )
         devices.append(device)
 
@@ -65,12 +67,14 @@ class SatelIntegraAlarmPanel(AlarmControlPanelEntity):
     _attr_supported_features = (
         AlarmControlPanelEntityFeature.ARM_HOME
         | AlarmControlPanelEntityFeature.ARM_AWAY
+        | AlarmControlPanelEntityFeature.ARM_NIGHT
     )
 
-    def __init__(self, controller, name, arm_home_mode, partition_id):
+    def __init__(self, controller, name, arm_home_mode, arm_night_mode, partition_id):
         """Initialize the alarm panel."""
         self._attr_name = name
         self._arm_home_mode = arm_home_mode
+        self._arm_night_mode = arm_night_mode
         self._partition_id = partition_id
         self._satel = controller
 
@@ -113,8 +117,9 @@ class SatelIntegraAlarmPanel(AlarmControlPanelEntity):
                 (AlarmState.ARMED_MODE2, AlarmControlPanelState.ARMED_HOME),
                 (AlarmState.ARMED_MODE1, AlarmControlPanelState.ARMED_HOME),
                 (AlarmState.ARMED_MODE0, AlarmControlPanelState.ARMED_AWAY),
-                (AlarmState.EXIT_COUNTDOWN_OVER_10, AlarmControlPanelState.PENDING),
-                (AlarmState.EXIT_COUNTDOWN_UNDER_10, AlarmControlPanelState.PENDING),
+                (AlarmState.ARMED_SUPPRESSED, AlarmControlPanelState.ARMED_CUSTOM_BYPASS),
+                (AlarmState.EXIT_COUNTDOWN_OVER_10, AlarmControlPanelState.ARMING),
+                (AlarmState.EXIT_COUNTDOWN_UNDER_10, AlarmControlPanelState.ARMING),
             ]
         )
         _LOGGER.debug("State map of Satel: %s", self._satel.partition_states)
@@ -159,3 +164,10 @@ class SatelIntegraAlarmPanel(AlarmControlPanelEntity):
 
         if code:
             await self._satel.arm(code, [self._partition_id], self._arm_home_mode)
+
+    async def async_alarm_arm_night(self, code: str | None = None) -> None:
+        """Send arm night command."""
+        _LOGGER.debug("Arming night")
+
+        if code:
+            await self._satel.arm(code, [self._partition_id], self._arm_night_mode)
